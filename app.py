@@ -15,18 +15,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for white background
-st.markdown(
-    """
-    <style>
-    body {
-        background-color: white;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 # Initialize config
 config = AppConfig()
 
