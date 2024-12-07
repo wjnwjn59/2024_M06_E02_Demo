@@ -15,19 +15,22 @@ def transform(img, img_size=(224, 224)):
 
 
 def download_model():
-    resnet_id = '1fnJMMw0LvDgl-GS4FTou5qAgLxOE2KQ0'
-    densenet_id = '1ZUCuYDOe4VVbZvNVZovpquaRQqqJQ639'
+    # https://drive.google.com/file/d/17anU3JnAhz0P2irjLkzkYxCJht9_iEbF/view?usp=sharing
+    resnet_id = '17anU3JnAhz0P2irjLkzkYxCJht9_iEbF'
+
+    # https://drive.google.com/file/d/1IL3IEK-BXo8HYGTe665QuMOnw3dN51tr/view?usp=sharing
+    densenet_id = '1IL3IEK-BXo8HYGTe665QuMOnw3dN51tr'
     unzip_dest = 'weights'
     os.makedirs(unzip_dest, exist_ok=True)
 
     gdown.download(id=resnet_id, 
-                   output=AppConfig.resnet_weights_path, 
-                   quiet=True,
+                   output=AppConfig().resnet_weights_path, 
+                   quiet=False,
                    fuzzy=True)
 
     gdown.download(id=densenet_id, 
-                   output=AppConfig.densenet_weights_path, 
-                   quiet=True,
+                   output=AppConfig().densenet_weights_path, 
+                   quiet=False,
                    fuzzy=True)
 
 

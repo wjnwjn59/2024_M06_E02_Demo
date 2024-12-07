@@ -18,6 +18,9 @@ st.set_page_config(
 # Initialize config
 config = AppConfig()
 
+if not os.path.exists(config.resnet_weights_path) or not os.path.exists(config.densenet_weights_path):
+    download_model()
+
 # Load class names
 weather_classes = config.get_weather_classes()
 scenes_classes = config.get_scenes_classes()
@@ -75,6 +78,4 @@ def main():
     footer()
 
 if __name__ == "__main__":
-    if not os.path.exists(AppConfig.resnet_weights_path) or not os.path.exists(AppConfig.densenet_weights_path):
-        download_model()
     main()
