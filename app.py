@@ -44,7 +44,6 @@ def main():
     
     with col1:
         st.title('AIO2024 - Module06 - Advanced CNN Architectures')
-        # st.title(':sparkles: :blue[Stereo Matching] Image Depth Estimation Demo')
         
     with col2:
         logo_img = open("static/aivn_logo.png", "rb").read()
@@ -63,9 +62,10 @@ def main():
     model_choice = st.selectbox("Select a Model", ["ResNet", "DenseNet"])
     uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
 
+    prediction_placeholder = st.empty()  # Placeholder for prediction result
+
     if uploaded_file:
         image = Image.open(uploaded_file)
-        st.image(image, caption="Uploaded Image", use_column_width=True)
 
         if st.button("Classify Image"):
             with st.spinner("Processing..."):
@@ -73,7 +73,12 @@ def main():
                     predicted_class = predict(image, resnet_model, weather_classes, config.device)
                 else:
                     predicted_class = predict(image, densenet_model, scenes_classes, config.device)
-            st.success(f"Predicted Class: {predicted_class}")
+
+            # Display prediction above the image
+            prediction_placeholder.success(f"Predicted Class: {predicted_class}")
+
+        # Display the uploaded image below the prediction
+        st.image(image, caption="Uploaded Image", use_column_width=True)
 
     footer()
 
