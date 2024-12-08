@@ -59,23 +59,43 @@ def main():
         
     st.markdown("Choose a model to classify your image!")
 
-    model_choice = st.selectbox("Select a Model", ["ResNet", "DenseNet"])
+    # Updated dropdown with additional notes
+    model_choice = st.selectbox(
+        "Select a Model",
+        ["ResNet (Weather Image Classification)", "DenseNet (Natural Scene Classification)"]
+    )
+
+    # Check model choice and assign the default image and class names accordingly
+    if "ResNet" in model_choice:
+        default_image_path = "static/rime.jpg"
+        model = resnet_model
+        classes = weather_classes
+        class_file = config.weather_classes_file
+    else:
+        default_image_path = "static/glacier.jpg"
+        model = densenet_model
+        classes = scenes_classes
+        class_file = config.scenes_classes_file
+
     uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
 
     prediction_placeholder = st.empty()  # Placeholder for prediction result
+
+    # Display class names beside the "Classify Image" button
+    with open(class_file, "r") as f:
+        class_list = f.read().splitlines()
+    st.markdown(f"**Class Names for {model_choice.split(' ')[0]}:**")
+    st.markdown(", ".join(class_list))
 
     # Check if a user has uploaded an image or use the default image
     if uploaded_file:
         image = Image.open(uploaded_file)
     else:
-        image = Image.open("static/glacier.jpg")  # Default image
+        image = Image.open(default_image_path)  # Default image based on model choice
 
     if st.button("Classify Image"):
         with st.spinner("Processing..."):
-            if model_choice == "ResNet":
-                predicted_class = predict(image, resnet_model, weather_classes, config.device)
-            else:
-                predicted_class = predict(image, densenet_model, scenes_classes, config.device)
+            predicted_class = predict(image, model, classes, config.device)
 
         # Display prediction above the image
         prediction_placeholder.success(f"Predicted Class: {predicted_class}")

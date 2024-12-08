@@ -15,8 +15,8 @@ def transform(img, img_size=(224, 224)):
 
 
 def download_model():
-    # https://drive.google.com/file/d/17anU3JnAhz0P2irjLkzkYxCJht9_iEbF/view?usp=sharing
-    resnet_id = '17anU3JnAhz0P2irjLkzkYxCJht9_iEbF'
+    # https://drive.google.com/file/d/1U_mH6rVWO6mxKBWG0iczjgSpaLeFdVyz/view?usp=drive_link
+    resnet_id = '1U_mH6rVWO6mxKBWG0iczjgSpaLeFdVyz'
 
     # https://drive.google.com/file/d/1IL3IEK-BXo8HYGTe665QuMOnw3dN51tr/view?usp=sharing
     densenet_id = '1IL3IEK-BXo8HYGTe665QuMOnw3dN51tr'
