@@ -64,21 +64,24 @@ def main():
 
     prediction_placeholder = st.empty()  # Placeholder for prediction result
 
+    # Check if a user has uploaded an image or use the default image
     if uploaded_file:
         image = Image.open(uploaded_file)
+    else:
+        image = Image.open("static/glacier.jpg")  # Default image
 
-        if st.button("Classify Image"):
-            with st.spinner("Processing..."):
-                if model_choice == "ResNet":
-                    predicted_class = predict(image, resnet_model, weather_classes, config.device)
-                else:
-                    predicted_class = predict(image, densenet_model, scenes_classes, config.device)
+    if st.button("Classify Image"):
+        with st.spinner("Processing..."):
+            if model_choice == "ResNet":
+                predicted_class = predict(image, resnet_model, weather_classes, config.device)
+            else:
+                predicted_class = predict(image, densenet_model, scenes_classes, config.device)
 
-            # Display prediction above the image
-            prediction_placeholder.success(f"Predicted Class: {predicted_class}")
+        # Display prediction above the image
+        prediction_placeholder.success(f"Predicted Class: {predicted_class}")
 
-        # Display the uploaded image below the prediction
-        st.image(image, caption="Uploaded Image", use_column_width=True)
+    # Display the image (uploaded or default)
+    st.image(image, caption="Uploaded Image" if uploaded_file else "Default Image", use_column_width=True)
 
     footer()
 
