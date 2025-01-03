@@ -1,50 +1,68 @@
-import os
+import torch
 import streamlit as st
 import base64
 from PIL import Image
-from cnn_models import load_resnet, load_densenet
-from utils import predict, download_model
 from config import AppConfig
-
+from utils import predict
 from components.streamlit_footer import footer
-
+from vqa_model import VQAModel, TextEncoder, VisualEncoder, Classifier 
+from transformers import AutoTokenizer, ViTImageProcessor
 # Set page configuration
 st.set_page_config(
-    page_title="AIO2024 Module02 Project Image Depth Estimation - AI VIETNAM",
+    page_title="AIO2024 Module06 Project - Visual Question Answering",
     page_icon='static/aivn_favicon.png',
     layout="wide"
 )
 
-# Initialize config
-config = AppConfig()
-
-if not os.path.exists(config.resnet_weights_path) or not os.path.exists(config.densenet_weights_path):
-    download_model()
 
 # Load class names
-weather_classes = config.get_weather_classes()
-scenes_classes = config.get_scenes_classes()
+answer_classes = AppConfig().get_answer_classes()
 
-# Load models
+# Load the VQA model
 @st.cache_resource
-def get_models():
-    densenet = load_densenet(config.densenet_weights_path, 
-                             num_classes=len(scenes_classes), 
-                             device=config.device)
-    resnet = load_resnet(config.resnet_weights_path, 
-                         num_classes=len(weather_classes), 
-                         device=config.device)
+def load_vqa_model():
+    # Initialize model components
+    text_encoder = TextEncoder().to(AppConfig().device)
+    visual_encoder = VisualEncoder().to(AppConfig().device)
+    classifier = Classifier(
+        hidden_size=256,
+        dropout_prob=0.2,
+        n_classes=len(answer_classes)
+    ).to(AppConfig().device)
 
-    return densenet, resnet
+    # Load the full model
+    model = VQAModel(
+        visual_encoder=visual_encoder,
+        text_encoder=text_encoder,
+        classifier=classifier
+    ).to(AppConfig().device)
 
-densenet_model, resnet_model = get_models()
+    # Load weights
+    checkpoint = torch.load(AppConfig().model_weights_path, map_location=AppConfig().device)
+    model.visual_encoder.load_state_dict(checkpoint['visual_encoder_state_dict'])
+    model.text_encoder.load_state_dict(checkpoint['text_encoder_state_dict'])
+    model.classifier.load_state_dict(checkpoint['classifier_state_dict'])
+    
+    return model
+
+# Load tokenizers and processors
+@st.cache_resource
+def load_processors():
+    img_feature_extractor = ViTImageProcessor.from_pretrained(AppConfig().img_encoder_id)
+    text_tokenizer = AutoTokenizer.from_pretrained(AppConfig().text_encoder_id)
+    return img_feature_extractor, text_tokenizer
+
+img_feature_extractor, text_tokenizer = load_processors()
+
+vqa_model = load_vqa_model()
 
 def main():
+    # UI Layout
     col1, col2 = st.columns([0.8, 0.2], gap='large')
-    
+
     with col1:
-        st.title('AIO2024 - Module06 - Advanced CNN Architectures')
-        
+        st.title('AIO2024 - Module06 - Visual Question Answering')
+
     with col2:
         logo_img = open("static/aivn_logo.png", "rb").read()
         logo_base64 = base64.b64encode(logo_img).decode()
@@ -56,51 +74,38 @@ def main():
             """,
             unsafe_allow_html=True,
         )
-        
-    st.markdown("Choose a model to classify your image!")
 
-    # Updated dropdown with additional notes
-    model_choice = st.selectbox(
-        "Select a Model",
-        ["ResNet (Weather Image Classification)", "DenseNet (Natural Scene Classification)"]
-    )
-
-    # Check model choice and assign the default image and class names accordingly
-    if "ResNet" in model_choice:
-        default_image_path = "static/rime.jpg"
-        model = resnet_model
-        classes = weather_classes
-        class_file = config.weather_classes_file
-    else:
-        default_image_path = "static/glacier.jpg"
-        model = densenet_model
-        classes = scenes_classes
-        class_file = config.scenes_classes_file
-
+    # Input: Upload an image
     uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+
+    # Input: Enter a question
+    question = st.text_input("Enter your question about the image:")
 
     prediction_placeholder = st.empty()  # Placeholder for prediction result
 
-    # Display class names beside the "Classify Image" button
-    with open(class_file, "r") as f:
-        class_list = f.read().splitlines()
-    st.markdown(f"**Class Names for {model_choice.split(' ')[0]}:**")
-    st.markdown(", ".join(class_list))
+    # Default image if none is uploaded
+    default_image_path = "static/default_image.jpg"
+    image = Image.open(uploaded_file) if uploaded_file else Image.open(default_image_path)
 
-    # Check if a user has uploaded an image or use the default image
-    if uploaded_file:
-        image = Image.open(uploaded_file)
-    else:
-        image = Image.open(default_image_path)  # Default image based on model choice
+    if st.button("Answer Question"):
+        if question.strip() == "":
+            st.error("Please enter a question.")
+        else:
+            with st.spinner("Processing..."):
+                predicted_answer = predict(
+                    image=image,
+                    question=question,
+                    model=vqa_model,
+                    text_tokenizer=text_tokenizer,  # Assume this is imported
+                    img_feature_extractor=img_feature_extractor,  # Assume this is imported
+                    idx2label={idx: label for idx, label in enumerate(answer_classes)},
+                    device=AppConfig().device
+                )
 
-    if st.button("Classify Image"):
-        with st.spinner("Processing..."):
-            predicted_class = predict(image, model, classes, config.device)
+            # Display prediction
+            prediction_placeholder.success(f"Predicted Answer: {predicted_answer}")
 
-        # Display prediction above the image
-        prediction_placeholder.success(f"Predicted Class: {predicted_class}")
-
-    # Display the image (uploaded or default)
+    # Display the image
     st.image(image, caption="Uploaded Image" if uploaded_file else "Default Image", use_column_width=True)
 
     footer()

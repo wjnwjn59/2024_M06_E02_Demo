@@ -1,7 +1,7 @@
-# Exercise Advanced CNN Architectures Demo
+# Project Visual Question Answering Demo
 
 ## Description
-A simple web demo for Advanced CNN Architecture on Streamlit. 
+A simple web demo for Visual Question Answering on Streamlit. 
 
 ## How to use
 ### Option 1: Using conda environment
